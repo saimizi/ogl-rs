@@ -1,0 +1,23 @@
+{
+  "cSpell.words": [
+    "GLES",
+    "Integerv",
+    "OGLWIN",
+    "OPENGL",
+    "Programiv",
+    "RENDERABLE",
+    "Rasterizer",
+    "Shaderiv",
+    "Uniformfv",
+    "consts",
+    "drawfunc",
+    "khronos",
+    "libloading",
+    "libm",
+    "libogl",
+    "mediump",
+    "rustix",
+    "tempfile",
+    "toplevel"
+  ]
+}
