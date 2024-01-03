@@ -1,7 +1,8 @@
-use super::{DrawContext, DrawFunc, VertexOps};
+use super::{DrawContext, DrawFunc};
 use error_stack::{Report, Result};
 use jlogger_tracing::jdebug;
 use libogl::error::OglError;
+use libogl::VertexOps;
 
 pub fn draw_lines(df: &mut DrawContext) -> Result<(), OglError> {
     if !df.initialized || df.draw_func != DrawFunc::DrawLines {

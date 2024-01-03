@@ -1,36 +1,37 @@
-use super::{DrawContext, DrawFunc, VertexOps};
+use super::{DrawContext, DrawFunc};
 use error_stack::Result;
 use jlogger_tracing::jdebug;
 use libogl::error::OglError;
+use libogl::VertexOps;
 
 pub fn draw_vbo_vertex_color2(df: &mut DrawContext) -> Result<(), OglError> {
     if !df.initialized || df.draw_func != DrawFunc::DrawVboVertexColor2 {
         let v_src = r#"
-                            #version 300 es
-                            layout(location = 0) in vec4 vPosition;
-                            layout(location = 1) in vec4 vColor;
-        
-                            out vec4 vColorVec;
-        
-                            void main()
-                            {
-                                gl_Position = vPosition;
-                                vColorVec = vColor;
-        
-                            }
-                    "#;
+                #version 300 es
+                layout(location = 0) in vec4 vPosition;
+                layout(location = 1) in vec4 vColor;
+
+                out vec4 vColorVec;
+
+                void main()
+                {
+                    gl_Position = vPosition;
+                    vColorVec = vColor;
+
+                }
+        "#;
 
         let f_src = r#"
-                            #version 300 es
-                            precision mediump float;
-                            out vec4 fragColor;
-        
-                            in vec4 vColorVec;
-                            void main()
-                            {
-                                fragColor = vColorVec ;
-                            }
-                    "#;
+                #version 300 es
+                precision mediump float;
+                out vec4 fragColor;
+
+                in vec4 vColorVec;
+                void main()
+                {
+                    fragColor = vColorVec ;
+                }
+        "#;
 
         df.gl.build(Some(v_src), Some(f_src))?;
 
@@ -50,11 +51,11 @@ pub fn draw_vbo_vertex_color2(df: &mut DrawContext) -> Result<(), OglError> {
         // Use separate vertex buffer objects to store vertex and color data.
         if df.vbo[0] == 0 || df.vbo[1] == 0 {
             #[rustfmt::skip]
-                let vertices = [
-                    0.0f32,    0.5f32, 0.0f32,
-                   -0.5f32,   -0.5f32, 0.0f32,
-                    0.5f32,   -0.5f32, 0.0f32,
-                ];
+            let vertices = [
+                0.0f32,    0.5f32, 0.0f32,
+               -0.5f32,   -0.5f32, 0.0f32,
+                0.5f32,   -0.5f32, 0.0f32,
+            ];
 
             gl.GenBuffers(2, &mut df.vbo as *mut u32);
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, df.vbo[0]);
@@ -70,11 +71,11 @@ pub fn draw_vbo_vertex_color2(df: &mut DrawContext) -> Result<(), OglError> {
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, 0);
 
             #[rustfmt::skip]
-                let color = [
-                   1.0f32, 0.0f32, 0.0f32,
-                   0.0f32, 1.0f32, 0.0f32,
-                   0.0f32, 0.0f32, 1.0f32,
-                ];
+            let color = [
+               1.0f32, 0.0f32, 0.0f32,
+               0.0f32, 1.0f32, 0.0f32,
+               0.0f32, 0.0f32, 1.0f32,
+            ];
 
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, df.vbo[1]);
 

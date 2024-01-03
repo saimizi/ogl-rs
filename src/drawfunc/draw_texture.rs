@@ -1,21 +1,22 @@
 use super::{DrawContext, DrawFunc};
 use error_stack::Result;
+use jlogger_tracing::jdebug;
 use libogl::error::OglError;
 use libogl::VertexOps;
 
-pub fn draw_vao_elements(df: &mut DrawContext) -> Result<(), OglError> {
+pub fn draw_texture(df: &mut DrawContext) -> Result<(), OglError> {
     if !df.initialized || df.draw_func != DrawFunc::DrawVaoVertexColorElement2 {
         let v_src = r#"
                 #version 300 es
                 layout(location = 0) in vec4 vPosition;
-                layout(location = 1) in vec4 vColor;
+                layout(location = 1) in vec2 vTexCoord;
 
-                out vec4 vColorVec;
+                out vec2 vTextureCoord;
 
                 void main()
                 {
                     gl_Position = vPosition;
-                    vColorVec = vColor;
+                    vTextureCoord= vTexCoord;
 
                 }
         "#;
@@ -25,10 +26,12 @@ pub fn draw_vao_elements(df: &mut DrawContext) -> Result<(), OglError> {
                 precision mediump float;
                 out vec4 fragColor;
 
-                in vec4 vColorVec;
+                in vec2 vTextureCoord;
+                uniform sampler2D u_Texture;
+
                 void main()
                 {
-                    fragColor = vColorVec ;
+                    fragColor= texture2D(u_Texture, vTextureCoord);
                 }
         "#;
 
@@ -39,14 +42,20 @@ pub fn draw_vao_elements(df: &mut DrawContext) -> Result<(), OglError> {
 
         unsafe {
             let gl = df.gl.gl();
-            gl.UseProgram(df.gl.program().unwrap());
+            let program = df.gl.program().unwrap();
+
+            let data = include_bytes!("../../doc/sample.png");
+            df.texture[0].create_from_buffer(data, gl)?;
+            jdebug!("texture: {}", df.texture[0]);
+
+            gl.UseProgram(program);
 
             #[rustfmt::skip]
             let vertices = [
+                //x        y                     z          
                 0.0f32,    f32::sqrt(0.5), 0.0f32,
-               -0.5f32,   -0.5f32, 0.0f32,
-                0.5f32,   -0.5f32, 0.0f32,
-                0.0f32,    0.0f32, 0.0f32,
+               -0.5f32,   -0.5f32,               0.0f32,
+                0.5f32,   -0.5f32,               0.0f32,
             ];
 
             // Create VBO for vertex and color
@@ -61,20 +70,21 @@ pub fn draw_vao_elements(df: &mut DrawContext) -> Result<(), OglError> {
                 gl33::GL_STATIC_DRAW,
             );
 
+            gl.BindBuffer(gl33::GL_ARRAY_BUFFER, df.vbo[1]);
+            // Texture coordinates falls into the range [0, 1].
             #[rustfmt::skip]
-            let color = [
-               1.0f32, 0.0f32, 0.0f32,
-               0.0f32, 1.0f32, 0.0f32,
-               0.0f32, 0.0f32, 1.0f32,
-               1.0f32, 1.0f32, 1.0f32,
+            let texture_vertex = [
+              //s       t
+                0.5f32, 1.0f32,
+                0.0f32, 0.0f32,
+                1.0f32, 0.0f32,
             ];
 
-            gl.BindBuffer(gl33::GL_ARRAY_BUFFER, df.vbo[1]);
-            let color_u8 = color.to_u8_slice();
+            let texture_vertex_u8 = texture_vertex.to_u8_slice();
             gl.BufferData(
                 gl33::GL_ARRAY_BUFFER,
-                color_u8.len() as isize,
-                color_u8.as_ptr().cast(),
+                texture_vertex_u8.len() as isize,
+                texture_vertex_u8.as_ptr().cast(),
                 gl33::GL_STATIC_DRAW,
             );
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, 0);
@@ -103,7 +113,11 @@ pub fn draw_vao_elements(df: &mut DrawContext) -> Result<(), OglError> {
 
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, df.vbo[1]);
             gl.EnableVertexAttribArray(1);
-            gl.VertexAttribPointer(1, 3, gl33::GL_FLOAT, 0, 0, 0 as *const std::ffi::c_void);
+            gl.VertexAttribPointer(1, 2, gl33::GL_FLOAT, 0, 0, 0 as *const std::ffi::c_void);
+
+            // Bind texture
+            let location = df.location("u_Texture").unwrap();
+            df.texture[0].bind(gl, 0, location)?;
 
             gl.BindBuffer(gl33::GL_ELEMENT_ARRAY_BUFFER, df.vbo[2]);
 

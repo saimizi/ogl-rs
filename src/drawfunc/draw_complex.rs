@@ -1,6 +1,7 @@
-use super::{DrawContext, DrawFunc, VertexOps};
+use super::{DrawContext, DrawFunc};
 use error_stack::{Report, Result};
 use libogl::error::OglError;
+use libogl::VertexOps;
 use std::f32::consts::PI;
 
 pub fn draw_complex(df: &mut DrawContext) -> Result<(), OglError> {

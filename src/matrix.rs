@@ -275,7 +275,7 @@ impl OglMatrix {
         fov: f32,
         aspect: f32,
         near_z: f32,
-        far_z: f32,
+        _far_z: f32,
     ) -> Result<(), OglError> {
         let frustum_x = f32::tan(fov * PI / 180.0f32 / 2.0f32) * near_z;
         let frustum_y = frustum_x * aspect;

@@ -1,6 +1,7 @@
-use super::{DrawContext, DrawFunc, VertexOps};
+use super::{DrawContext, DrawFunc};
 use error_stack::Result;
 use libogl::error::OglError;
+use libogl::VertexOps;
 
 pub fn draw_triangle_strip(df: &mut DrawContext) -> Result<(), OglError> {
     static mut VERTICES_NUMBER: i32 = 0;

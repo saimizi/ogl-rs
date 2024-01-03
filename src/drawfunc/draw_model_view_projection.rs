@@ -1,10 +1,11 @@
 use super::elapsed_milliseconds;
-use super::{DrawContext, DrawFunc, VertexOps};
+use super::{DrawContext, DrawFunc};
 use error_stack::Result;
 use jlogger_tracing::jdebug;
 use libogl::error::OglError;
 use libogl::matrix::OglMatrix;
 use libogl::matrix::RotateDirection;
+use libogl::VertexOps;
 
 pub fn draw_model_view_projection(df: &mut DrawContext) -> Result<(), OglError> {
     if !df.initialized || df.draw_func != DrawFunc::DrawVaoVertexColorElement2 {

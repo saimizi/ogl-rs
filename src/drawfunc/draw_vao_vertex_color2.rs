@@ -1,6 +1,7 @@
-use super::{DrawContext, DrawFunc, VertexOps};
+use super::{DrawContext, DrawFunc};
 use error_stack::Result;
 use libogl::error::OglError;
+use libogl::VertexOps;
 
 pub fn draw_vao_vertex_color2(df: &mut DrawContext) -> Result<(), OglError> {
     if !df.initialized || df.draw_func != DrawFunc::DrawVaoVertexColor2 {
@@ -41,11 +42,11 @@ pub fn draw_vao_vertex_color2(df: &mut DrawContext) -> Result<(), OglError> {
             gl.UseProgram(df.gl.program().unwrap());
 
             #[rustfmt::skip]
-                let vertices = [
-                    0.0f32,    0.5f32, 0.0f32,
-                   -0.5f32,   -0.5f32, 0.0f32,
-                    0.5f32,   -0.5f32, 0.0f32,
-                ];
+            let vertices = [
+                0.0f32,    0.5f32, 0.0f32,
+               -0.5f32,   -0.5f32, 0.0f32,
+                0.5f32,   -0.5f32, 0.0f32,
+            ];
 
             let mut vbo = [0_u32; 2];
             gl.GenBuffers(3, &mut vbo as *mut u32);
@@ -60,11 +61,11 @@ pub fn draw_vao_vertex_color2(df: &mut DrawContext) -> Result<(), OglError> {
             );
 
             #[rustfmt::skip]
-                let color = [
-                   1.0f32, 0.0f32, 0.0f32,
-                   0.0f32, 1.0f32, 0.0f32,
-                   0.0f32, 0.0f32, 1.0f32,
-                ];
+            let color = [
+               1.0f32, 0.0f32, 0.0f32,
+               0.0f32, 1.0f32, 0.0f32,
+               0.0f32, 0.0f32, 1.0f32,
+            ];
 
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, vbo[1]);
             let color_u8 = color.to_u8_slice();

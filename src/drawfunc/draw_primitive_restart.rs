@@ -1,37 +1,38 @@
-use super::{DrawContext, DrawFunc, VertexOps};
+use super::{DrawContext, DrawFunc};
 use error_stack::Result;
 use jlogger_tracing::jinfo;
 use libogl::error::OglError;
+use libogl::VertexOps;
 
 pub fn draw_primitive_restart(df: &mut DrawContext) -> Result<(), OglError> {
     static mut INDICES_NUM: i32 = 0;
     if !df.initialized || df.draw_func != DrawFunc::DrawVaoVertexColorElement2 {
         let v_src = r#"
-                            #version 300 es
-                            layout(location = 0) in vec4 vPosition;
-                            layout(location = 1) in vec4 vColor;
-        
-                            out vec4 vColorVec;
-        
-                            void main()
-                            {
-                                gl_Position = vPosition;
-                                vColorVec = vColor;
-        
-                            }
-                    "#;
+                #version 300 es
+                layout(location = 0) in vec4 vPosition;
+                layout(location = 1) in vec4 vColor;
+
+                out vec4 vColorVec;
+
+                void main()
+                {
+                    gl_Position = vPosition;
+                    vColorVec = vColor;
+
+                }
+        "#;
 
         let f_src = r#"
-                            #version 300 es
-                            precision mediump float;
-                            out vec4 fragColor;
-        
-                            in vec4 vColorVec;
-                            void main()
-                            {
-                                fragColor = vColorVec ;
-                            }
-                    "#;
+                #version 300 es
+                precision mediump float;
+                out vec4 fragColor;
+
+                in vec4 vColorVec;
+                void main()
+                {
+                    fragColor = vColorVec ;
+                }
+        "#;
 
         df.gl.build(Some(v_src), Some(f_src))?;
 

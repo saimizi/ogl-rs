@@ -1,7 +1,8 @@
-use super::{DrawContext, DrawFunc, VertexOps};
+use super::{DrawContext, DrawFunc};
 use error_stack::Result;
 use jlogger_tracing::jinfo;
 use libogl::error::OglError;
+use libogl::VertexOps;
 use std::f32::consts::PI;
 
 pub fn draw_instance2(df: &mut DrawContext) -> Result<(), OglError> {

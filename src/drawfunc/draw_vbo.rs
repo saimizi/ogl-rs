@@ -1,7 +1,8 @@
-use super::{DrawContext, DrawFunc, VertexOps};
+use super::{DrawContext, DrawFunc};
 use error_stack::{Report, Result};
 use jlogger_tracing::jdebug;
 use libogl::error::OglError;
+use libogl::VertexOps;
 
 pub fn draw_vbo(df: &mut DrawContext) -> Result<(), OglError> {
     if !df.initialized || df.draw_func != DrawFunc::DrawVbo {
@@ -31,11 +32,11 @@ pub fn draw_vbo(df: &mut DrawContext) -> Result<(), OglError> {
 
         if df.vbo[0] == 0 {
             #[rustfmt::skip]
-                let vertices = [
-                    0.0f32,    0.5f32, 0.0f32,
-                   -0.5f32,   -0.5f32, 0.0f32,
-                    0.5f32,   -0.5f32, 0.0f32,
-                ];
+            let vertices = [
+                0.0f32,    0.5f32, 0.0f32,
+               -0.5f32,   -0.5f32, 0.0f32,
+                0.5f32,   -0.5f32, 0.0f32,
+            ];
 
             gl.GenBuffers(1, &mut df.vbo as *mut u32);
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, df.vbo[0]);

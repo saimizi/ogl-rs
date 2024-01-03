@@ -4,11 +4,14 @@
     "Integerv",
     "OGLWIN",
     "OPENGL",
+    "Parameteri",
     "Programiv",
     "RENDERABLE",
+    "RGBA",
     "Rasterizer",
     "Shaderiv",
     "Uniformfv",
+    "Uninit",
     "consts",
     "drawfunc",
     "khronos",
@@ -17,6 +20,7 @@
     "libogl",
     "mediump",
     "rustix",
+    "stbi",
     "tempfile",
     "toplevel"
   ]

@@ -1,6 +1,7 @@
-use super::{elapsed_seconds, DrawContext, DrawFunc, VertexOps};
+use super::{elapsed_seconds, DrawContext, DrawFunc};
 use error_stack::Result;
 use libogl::error::OglError;
+use libogl::VertexOps;
 use rand::Rng;
 use std::f32::consts::PI;
 

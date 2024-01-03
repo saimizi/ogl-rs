@@ -1,35 +1,36 @@
-use super::{DrawContext, DrawFunc, VertexOps};
+use super::{DrawContext, DrawFunc};
 use error_stack::Result;
 use jlogger_tracing::jdebug;
 use libogl::error::OglError;
+use libogl::VertexOps;
 
 pub fn draw_vbo2(df: &mut DrawContext) -> Result<(), OglError> {
     if !df.initialized || df.draw_func != DrawFunc::DrawVbo2 {
         let v_src = r#"
-            #version 300 es
-            layout(location = 0) in vec4 vPosition;
-            layout(location = 1) in vec4 vColor;
+                #version 300 es
+                layout(location = 0) in vec4 vPosition;
+                layout(location = 1) in vec4 vColor;
 
-            out vec4 vColorVec;
+                out vec4 vColorVec;
 
-            void main()
-            {
-                gl_Position = vPosition;
-                vColorVec = vColor;
-            }
+                void main()
+                {
+                    gl_Position = vPosition;
+                    vColorVec = vColor;
+                }
         "#;
 
         let f_src = r#"
-            #version 300 es
-            precision mediump float;
-            out vec4 fragColor;
+                #version 300 es
+                precision mediump float;
+                out vec4 fragColor;
 
-            in vec4 vColorVec;
+                in vec4 vColorVec;
 
-            void main()
-            {
-                fragColor = vColorVec;
-            }
+                void main()
+                {
+                    fragColor = vColorVec;
+                }
         "#;
 
         df.gl.build(Some(v_src), Some(f_src))?;
@@ -50,11 +51,11 @@ pub fn draw_vbo2(df: &mut DrawContext) -> Result<(), OglError> {
 
         if df.vbo[0] == 0 {
             #[rustfmt::skip]
-                let vertices = [
-                    0.0f32,    0.5f32, 0.0f32,
-                   -0.5f32,   -0.5f32, 0.0f32,
-                    0.5f32,   -0.5f32, 0.0f32,
-                ];
+            let vertices = [
+                0.0f32,    0.5f32, 0.0f32,
+               -0.5f32,   -0.5f32, 0.0f32,
+                0.5f32,   -0.5f32, 0.0f32,
+            ];
 
             gl.GenBuffers(1, &mut df.vbo as *mut u32);
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, df.vbo[0]);

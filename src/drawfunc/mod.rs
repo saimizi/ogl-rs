@@ -6,6 +6,7 @@ pub mod draw_lines;
 pub mod draw_model_view_projection;
 pub mod draw_primitive_restart;
 pub mod draw_provoking_vertex;
+pub mod draw_texture;
 pub mod draw_triangle_strip;
 pub mod draw_vao_elements;
 pub mod draw_vao_vertex_color;
@@ -20,7 +21,10 @@ use super::gl::GlState;
 use error_stack::Result;
 use jlogger_tracing::jinfo;
 use libogl::error::OglError;
+use libogl::texture2d::Texture2D;
 use once_cell::sync::OnceCell;
+use std::ffi::CString;
+use std::mem::{self, MaybeUninit};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
@@ -32,6 +36,7 @@ use draw_lines::draw_lines;
 use draw_model_view_projection::draw_model_view_projection;
 use draw_primitive_restart::draw_primitive_restart;
 use draw_provoking_vertex::draw_provoking_vertex;
+use draw_texture::draw_texture;
 use draw_triangle_strip::draw_triangle_strip;
 use draw_vao_elements::draw_vao_elements;
 use draw_vao_vertex_color::draw_vao_vertex_color;
@@ -73,43 +78,6 @@ impl RunState {
     }
 }
 
-trait VertexOps {
-    fn to_u8_slice(&self) -> &[u8];
-}
-
-impl VertexOps for [f32] {
-    fn to_u8_slice(&self) -> &[u8] {
-        unsafe {
-            core::slice::from_raw_parts(
-                self.as_ptr() as *const u8,
-                self.len() * core::mem::size_of::<f32>(),
-            )
-        }
-    }
-}
-
-impl VertexOps for [u16] {
-    fn to_u8_slice(&self) -> &[u8] {
-        unsafe {
-            core::slice::from_raw_parts(
-                self.as_ptr() as *const u8,
-                self.len() * core::mem::size_of::<u16>(),
-            )
-        }
-    }
-}
-
-impl VertexOps for Vec<f32> {
-    fn to_u8_slice(&self) -> &[u8] {
-        unsafe {
-            core::slice::from_raw_parts(
-                self.as_ptr() as *const u8,
-                self.len() * core::mem::size_of::<f32>(),
-            )
-        }
-    }
-}
-
 pub trait DrawContextOps {
     fn do_dispatch(&mut self) -> Result<(), OglError>;
     fn do_swap(&self) -> Result<(), OglError>;
@@ -135,6 +103,7 @@ pub enum DrawFunc {
     DrawInstance2,
     DrawTriangleStrip,
     DrawModelViewProjection,
+    DrawTexture,
 }
 
 impl std::fmt::Display for DrawFunc {
@@ -169,6 +138,7 @@ impl std::fmt::Display for DrawFunc {
             DrawFunc::DrawInstance2 => format!("{}_DrawInstance2", index),
             DrawFunc::DrawTriangleStrip => format!("{}_DrawTriangleStrip", index),
             DrawFunc::DrawModelViewProjection => format!("{}_DrawModelViewProjection", index),
+            DrawFunc::DrawTexture => format!("{}_DrawTexture", index),
         };
 
         write!(f, "{}", msg)
@@ -195,6 +165,7 @@ impl From<usize> for DrawFunc {
             15 => DrawFunc::DrawInstance2,
             16 => DrawFunc::DrawTriangleStrip,
             17 => DrawFunc::DrawModelViewProjection,
+            18 => DrawFunc::DrawTexture,
             _ => DrawFunc::DrawModelViewProjection,
         }
     }
@@ -223,10 +194,20 @@ pub struct DrawContext {
     vertex_number: u32,
     initialized: bool,
     draw_func: DrawFunc,
+    texture: [Texture2D; 8],
 }
 
 impl DrawContext {
     pub fn new(gl: GlState, width: i32, height: i32) -> Self {
+        let mut texture: [MaybeUninit<Texture2D>; 8] =
+            unsafe { mem::MaybeUninit::uninit().assume_init() };
+
+        for element in &mut texture {
+            element.write(Texture2D::default());
+        }
+
+        let texture = unsafe { mem::transmute(texture) };
+
         Self {
             w: 0,
             h: 0,
@@ -240,6 +221,7 @@ impl DrawContext {
             vertex_number: 0,
             initialized: false,
             draw_func: DrawFunc::DrawVbo,
+            texture,
         }
     }
 
@@ -272,12 +254,27 @@ impl DrawContext {
                 DrawFunc::DrawInstance2 => draw_instance2(self)?,
                 DrawFunc::DrawTriangleStrip => draw_triangle_strip(self)?,
                 DrawFunc::DrawModelViewProjection => draw_model_view_projection(self)?,
+                DrawFunc::DrawTexture => draw_texture(self)?,
             }
 
             ops.do_swap()?;
         }
 
         Ok(())
+    }
+
+    pub fn location(&self, name: &str) -> Option<i32> {
+        let program = self.gl.program().unwrap();
+        let gl = self.gl.gl();
+        let name = CString::new(name).unwrap();
+
+        let location = unsafe { gl.GetUniformLocation(program, name.as_ptr().cast()) };
+
+        if location >= 0 {
+            Some(location)
+        } else {
+            None
+        }
     }
 }
 

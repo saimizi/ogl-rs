@@ -1,7 +1,8 @@
-use super::{DrawContext, DrawFunc, VertexOps};
+use super::{DrawContext, DrawFunc};
 use error_stack::{Report, Result};
 use jlogger_tracing::jdebug;
 use libogl::error::OglError;
+use libogl::VertexOps;
 
 pub fn draw_without_vbo(df: &mut DrawContext) -> Result<(), OglError> {
     if !df.initialized || df.draw_func != DrawFunc::DrawWithoutVbo {
@@ -27,11 +28,11 @@ pub fn draw_without_vbo(df: &mut DrawContext) -> Result<(), OglError> {
         gl.Uniform4f(location, 0.8f32, 0.3f32, 0.02f32, 1.0f32);
 
         #[rustfmt::skip]
-            let vertices: [f32; 9] = [
-                    0.0f32,    0.5f32, 0.0f32,
-                   -0.5f32,   -0.5f32, 0.0f32,
-                    0.5f32,   -0.5f32, 0.0f32,
-            ];
+        let vertices: [f32; 9] = [
+                0.0f32,    0.5f32, 0.0f32,
+               -0.5f32,   -0.5f32, 0.0f32,
+                0.5f32,   -0.5f32, 0.0f32,
+        ];
 
         jdebug!("drawing without VBO.");
 

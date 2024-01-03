@@ -435,6 +435,7 @@ dependencies = [
  "rand",
  "rustix",
  "sdl2",
+ "stb_image",
  "tempfile",
  "wayland-client",
  "wayland-egl",
@@ -661,6 +662,16 @@ name = "smallvec"
 version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "942b4a808e05215192e39f4ab80813e599068285906cc91aa64f923db842bd5a"
+
+[[package]]
+name = "stb_image"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfdaa89eb7dd3362e4abb16c4a8acf04786755882b38ff00714f2f1de0f4fcd3"
+dependencies = [
+ "cc",
+ "libc",
+]
 
 [[package]]
 name = "strsim"
