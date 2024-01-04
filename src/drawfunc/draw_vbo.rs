@@ -25,8 +25,9 @@ pub fn draw_vbo(df: &mut DrawContext) -> Result<(), OglError> {
 
         // Use uniform to set color for all vertex in frag shader.
 
-        let name = std::ffi::CString::new("u_Color").unwrap();
-        let location = gl.GetUniformLocation(program, name.as_ptr().cast());
+        let location = df
+            .location("u_Color")
+            .ok_or(Report::new(OglError::Unexpected))?;
 
         gl.Uniform4f(location, 0.8f32, 0.3f32, 0.02f32, 1.0f32);
 

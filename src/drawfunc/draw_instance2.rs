@@ -1,5 +1,5 @@
 use super::{DrawContext, DrawFunc};
-use error_stack::Result;
+use error_stack::{Report, Result};
 use jlogger_tracing::jinfo;
 use libogl::error::OglError;
 use libogl::VertexOps;
@@ -58,18 +58,20 @@ pub fn draw_instance2(df: &mut DrawContext) -> Result<(), OglError> {
                 -1.0f32, -1.0f32, 0.0f32, 1.0f32,
             ];
 
-            let name = std::ffi::CString::new("uOffset").unwrap();
-            let location = gl.GetUniformLocation(program, name.as_ptr().cast());
+            let location = df
+                .location("uOffset")
+                .ok_or(Report::new(OglError::Unexpected))?;
+
             jinfo!(location = location);
             gl.Uniform4fv(location, 5, offset.as_ptr().cast());
 
             // print Uniform value uOffset.
             let print_val = |i: usize| {
-                let name = std::ffi::CString::new(format!("uOffset[{}]", i)).unwrap();
-                let location = gl.GetUniformLocation(program, name.as_ptr().cast());
-                let val = [0.0f32; 4];
-                gl.GetUniformfv(program, location, val.as_ptr().cast_mut());
-                jinfo!(location = location, val = format!("{:?}", val));
+                if let Some(location) = df.location(&format!("uOffset[{}]", i)) {
+                    let val = [0.0f32; 4];
+                    gl.GetUniformfv(program, location, val.as_ptr().cast_mut());
+                    jinfo!(location = location, val = format!("{:?}", val));
+                }
             };
 
             print_val(0);

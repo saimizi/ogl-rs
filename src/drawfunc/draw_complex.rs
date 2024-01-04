@@ -15,7 +15,6 @@ pub fn draw_complex(df: &mut DrawContext) -> Result<(), OglError> {
     }
 
     let gl = df.gl.gl();
-    let program = df.gl.program().ok_or(Report::new(OglError::InvalidData))?;
 
     if df.w == 0 || df.h == 0 {
         df.turn_small = false;
@@ -40,8 +39,9 @@ pub fn draw_complex(df: &mut DrawContext) -> Result<(), OglError> {
         gl.UseProgram(df.gl.program().unwrap());
 
         {
-            let name = std::ffi::CString::new("u_Color").unwrap();
-            let location = gl.GetUniformLocation(program, name.as_ptr().cast());
+            let location = df
+                .location("u_Color")
+                .ok_or(Report::new(OglError::Unexpected))?;
 
             static mut C: [f32; 3] = [0.01, 0.8, 0.5];
             static mut D: [f32; 3] = [0.0001, 0.0001, 0.0001];

@@ -1,6 +1,6 @@
 use super::elapsed_milliseconds;
 use super::{DrawContext, DrawFunc};
-use error_stack::Result;
+use error_stack::{Report, Result};
 use jlogger_tracing::jdebug;
 use libogl::error::OglError;
 use libogl::matrix::OglMatrix;
@@ -49,8 +49,9 @@ pub fn draw_model_view_projection(df: &mut DrawContext) -> Result<(), OglError> 
             gl.UseProgram(program);
 
             // Store the location of "u_mvpMatrix" to df->locations[0];
-            let name = std::ffi::CString::new("u_mvpMatrix").unwrap();
-            df.locations[0] = gl.GetUniformLocation(program, name.as_ptr().cast());
+            df.locations[0] = df
+                .location("u_mvpMatrix")
+                .ok_or(Report::new(OglError::Unexpected))?;
 
             #[rustfmt::skip]
             let vertices = [

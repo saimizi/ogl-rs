@@ -23,8 +23,10 @@ pub fn draw_without_vbo(df: &mut DrawContext) -> Result<(), OglError> {
         gl.Clear(gl33::GL_COLOR_BUFFER_BIT);
         gl.UseProgram(program);
 
-        let name = std::ffi::CString::new("u_Color").unwrap();
-        let location = gl.GetUniformLocation(program, name.as_ptr().cast());
+        let location = df
+            .location("u_Color")
+            .ok_or(Report::new(OglError::Unexpected))?;
+
         gl.Uniform4f(location, 0.8f32, 0.3f32, 0.02f32, 1.0f32);
 
         #[rustfmt::skip]
