@@ -7,6 +7,7 @@ pub mod draw_model_view_projection;
 pub mod draw_primitive_restart;
 pub mod draw_provoking_vertex;
 pub mod draw_texture;
+pub mod draw_texture2;
 pub mod draw_triangle_strip;
 pub mod draw_vao_elements;
 pub mod draw_vao_vertex_color;
@@ -37,6 +38,7 @@ use draw_model_view_projection::draw_model_view_projection;
 use draw_primitive_restart::draw_primitive_restart;
 use draw_provoking_vertex::draw_provoking_vertex;
 use draw_texture::draw_texture;
+use draw_texture2::draw_texture2;
 use draw_triangle_strip::draw_triangle_strip;
 use draw_vao_elements::draw_vao_elements;
 use draw_vao_vertex_color::draw_vao_vertex_color;
@@ -104,6 +106,7 @@ pub enum DrawFunc {
     DrawTriangleStrip,
     DrawModelViewProjection,
     DrawTexture,
+    DrawTexture2,
 }
 
 impl std::fmt::Display for DrawFunc {
@@ -139,6 +142,7 @@ impl std::fmt::Display for DrawFunc {
             DrawFunc::DrawTriangleStrip => format!("{}_DrawTriangleStrip", index),
             DrawFunc::DrawModelViewProjection => format!("{}_DrawModelViewProjection", index),
             DrawFunc::DrawTexture => format!("{}_DrawTexture", index),
+            DrawFunc::DrawTexture2 => format!("{}_DrawTexture2", index),
         };
 
         write!(f, "{}", msg)
@@ -166,6 +170,7 @@ impl From<usize> for DrawFunc {
             16 => DrawFunc::DrawTriangleStrip,
             17 => DrawFunc::DrawModelViewProjection,
             18 => DrawFunc::DrawTexture,
+            19 => DrawFunc::DrawTexture2,
             _ => DrawFunc::DrawModelViewProjection,
         }
     }
@@ -255,6 +260,7 @@ impl DrawContext {
                 DrawFunc::DrawTriangleStrip => draw_triangle_strip(self)?,
                 DrawFunc::DrawModelViewProjection => draw_model_view_projection(self)?,
                 DrawFunc::DrawTexture => draw_texture(self)?,
+                DrawFunc::DrawTexture2 => draw_texture2(self)?,
             }
 
             ops.do_swap()?;

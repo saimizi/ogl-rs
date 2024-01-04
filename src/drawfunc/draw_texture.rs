@@ -5,7 +5,7 @@ use libogl::error::OglError;
 use libogl::VertexOps;
 
 pub fn draw_texture(df: &mut DrawContext) -> Result<(), OglError> {
-    if !df.initialized || df.draw_func != DrawFunc::DrawVaoVertexColorElement2 {
+    if !df.initialized || df.draw_func != DrawFunc::DrawTexture {
         let v_src = r#"
                 #version 300 es
                 layout(location = 0) in vec4 vPosition;
@@ -38,7 +38,7 @@ pub fn draw_texture(df: &mut DrawContext) -> Result<(), OglError> {
         df.gl.build(Some(v_src), Some(f_src))?;
 
         df.initialized = true;
-        df.draw_func = DrawFunc::DrawVaoVertexColorElement2;
+        df.draw_func = DrawFunc::DrawTexture;
 
         unsafe {
             let gl = df.gl.gl();
