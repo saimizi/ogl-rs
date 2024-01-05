@@ -2,6 +2,8 @@
   "cSpell.words": [
     "GLES",
     "Integerv",
+    "LEQUAL",
+    "Lenum",
     "OGLWIN",
     "OPENGL",
     "Parameteri",
@@ -13,6 +15,7 @@
     "Uniformfv",
     "Uninit",
     "consts",
+    "cubemap",
     "drawfunc",
     "khronos",
     "libloading",
