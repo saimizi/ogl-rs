@@ -9,6 +9,7 @@ pub mod draw_provoking_vertex;
 pub mod draw_texture;
 pub mod draw_texture2;
 pub mod draw_texture3;
+pub mod draw_texture_cubemap;
 pub mod draw_texture_mipmap;
 pub mod draw_triangle_strip;
 pub mod draw_vao_elements;
@@ -24,7 +25,7 @@ use super::gl::GlState;
 use error_stack::Result;
 use jlogger_tracing::jinfo;
 use libogl::error::OglError;
-use libogl::texture2d::Texture2D;
+use libogl::texture2d::{Texture2D, Texture2DCubeMap};
 use once_cell::sync::OnceCell;
 use std::ffi::CString;
 use std::mem::{self, MaybeUninit};
@@ -42,6 +43,7 @@ use draw_provoking_vertex::draw_provoking_vertex;
 use draw_texture::draw_texture;
 use draw_texture2::draw_texture2;
 use draw_texture3::draw_texture3;
+use draw_texture_cubemap::draw_texture_cubemap;
 use draw_texture_mipmap::draw_texture_mipmapping;
 use draw_triangle_strip::draw_triangle_strip;
 use draw_vao_elements::draw_vao_elements;
@@ -113,6 +115,7 @@ pub enum DrawFunc {
     DrawTexture2,
     DrawTexture3,
     DrawTextureMipMapping,
+    DrawTextureCubeMap,
 }
 
 impl std::fmt::Display for DrawFunc {
@@ -151,6 +154,7 @@ impl std::fmt::Display for DrawFunc {
             DrawFunc::DrawTexture2 => format!("{}_DrawTexture2", index),
             DrawFunc::DrawTexture3 => format!("{}_DrawTexture3", index),
             DrawFunc::DrawTextureMipMapping => format!("{}_DrawTextureMipMapping", index),
+            DrawFunc::DrawTextureCubeMap => format!("{}_DrawTextureCubeMap", index),
         };
 
         write!(f, "{}", msg)
@@ -181,6 +185,7 @@ impl From<usize> for DrawFunc {
             19 => DrawFunc::DrawTexture2,
             20 => DrawFunc::DrawTexture3,
             21 => DrawFunc::DrawTextureMipMapping,
+            22 => DrawFunc::DrawTextureCubeMap,
             _ => DrawFunc::DrawModelViewProjection,
         }
     }
@@ -210,6 +215,7 @@ pub struct DrawContext {
     initialized: bool,
     draw_func: DrawFunc,
     texture: [Texture2D; 8],
+    texture_cubemap: [Texture2DCubeMap; 8],
 }
 
 impl DrawContext {
@@ -222,6 +228,15 @@ impl DrawContext {
         }
 
         let texture = unsafe { mem::transmute(texture) };
+
+        let mut texture_cubemap: [MaybeUninit<Texture2DCubeMap>; 8] =
+            unsafe { mem::MaybeUninit::uninit().assume_init() };
+
+        for element in &mut texture_cubemap {
+            element.write(Texture2DCubeMap::default());
+        }
+
+        let texture_cubemap = unsafe { mem::transmute(texture_cubemap) };
 
         Self {
             w: 0,
@@ -237,6 +252,7 @@ impl DrawContext {
             initialized: false,
             draw_func: DrawFunc::DrawVbo,
             texture,
+            texture_cubemap,
         }
     }
 
@@ -273,6 +289,7 @@ impl DrawContext {
                 DrawFunc::DrawTexture2 => draw_texture2(self)?,
                 DrawFunc::DrawTexture3 => draw_texture3(self)?,
                 DrawFunc::DrawTextureMipMapping => draw_texture_mipmapping(self)?,
+                DrawFunc::DrawTextureCubeMap => draw_texture_cubemap(self)?,
             }
 
             ops.do_swap()?;
