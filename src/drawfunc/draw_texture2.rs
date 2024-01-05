@@ -3,6 +3,7 @@ use error_stack::{Report, Result};
 use jlogger_tracing::jdebug;
 use libogl::error::OglError;
 use libogl::matrix::{OglMatrix, RotateDirection};
+use libogl::texture2d::Texture2DFilter;
 use libogl::VertexOps;
 
 pub fn draw_texture2(df: &mut DrawContext) -> Result<(), OglError> {
@@ -47,7 +48,7 @@ pub fn draw_texture2(df: &mut DrawContext) -> Result<(), OglError> {
             let program = df.gl.program().unwrap();
 
             let data = include_bytes!("../../doc/sample2.png");
-            df.texture[0].create_from_buffer(data, gl)?;
+            df.texture[0].create_from_buffer(data, gl, Texture2DFilter::Nearest)?;
             jdebug!("texture: {}", df.texture[0]);
 
             gl.UseProgram(program);

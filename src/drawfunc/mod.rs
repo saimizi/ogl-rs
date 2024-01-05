@@ -9,6 +9,7 @@ pub mod draw_provoking_vertex;
 pub mod draw_texture;
 pub mod draw_texture2;
 pub mod draw_texture3;
+pub mod draw_texture_mipmap;
 pub mod draw_triangle_strip;
 pub mod draw_vao_elements;
 pub mod draw_vao_vertex_color;
@@ -41,6 +42,7 @@ use draw_provoking_vertex::draw_provoking_vertex;
 use draw_texture::draw_texture;
 use draw_texture2::draw_texture2;
 use draw_texture3::draw_texture3;
+use draw_texture_mipmap::draw_texture_mipmapping;
 use draw_triangle_strip::draw_triangle_strip;
 use draw_vao_elements::draw_vao_elements;
 use draw_vao_vertex_color::draw_vao_vertex_color;
@@ -110,6 +112,7 @@ pub enum DrawFunc {
     DrawTexture,
     DrawTexture2,
     DrawTexture3,
+    DrawTextureMipMapping,
 }
 
 impl std::fmt::Display for DrawFunc {
@@ -147,6 +150,7 @@ impl std::fmt::Display for DrawFunc {
             DrawFunc::DrawTexture => format!("{}_DrawTexture", index),
             DrawFunc::DrawTexture2 => format!("{}_DrawTexture2", index),
             DrawFunc::DrawTexture3 => format!("{}_DrawTexture3", index),
+            DrawFunc::DrawTextureMipMapping => format!("{}_DrawTextureMipMapping", index),
         };
 
         write!(f, "{}", msg)
@@ -176,6 +180,7 @@ impl From<usize> for DrawFunc {
             18 => DrawFunc::DrawTexture,
             19 => DrawFunc::DrawTexture2,
             20 => DrawFunc::DrawTexture3,
+            21 => DrawFunc::DrawTextureMipMapping,
             _ => DrawFunc::DrawModelViewProjection,
         }
     }
@@ -267,6 +272,7 @@ impl DrawContext {
                 DrawFunc::DrawTexture => draw_texture(self)?,
                 DrawFunc::DrawTexture2 => draw_texture2(self)?,
                 DrawFunc::DrawTexture3 => draw_texture3(self)?,
+                DrawFunc::DrawTextureMipMapping => draw_texture_mipmapping(self)?,
             }
 
             ops.do_swap()?;

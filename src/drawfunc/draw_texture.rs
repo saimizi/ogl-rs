@@ -2,6 +2,7 @@ use super::{DrawContext, DrawFunc};
 use error_stack::Result;
 use jlogger_tracing::jdebug;
 use libogl::error::OglError;
+use libogl::texture2d::Texture2DFilter;
 use libogl::VertexOps;
 
 pub fn draw_texture(df: &mut DrawContext) -> Result<(), OglError> {
@@ -45,7 +46,7 @@ pub fn draw_texture(df: &mut DrawContext) -> Result<(), OglError> {
             let program = df.gl.program().unwrap();
 
             let data = include_bytes!("../../doc/sample.png");
-            df.texture[0].create_from_buffer(data, gl)?;
+            df.texture[0].create_from_buffer(data, gl, Texture2DFilter::Linear)?;
             jdebug!("texture: {}", df.texture[0]);
 
             gl.UseProgram(program);

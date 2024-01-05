@@ -6,6 +6,15 @@ use std::fs::OpenOptions;
 use std::io::Read;
 use std::slice;
 
+pub enum Texture2DFilter {
+    Nearest,
+    Linear,
+    NearestMiMapNearest,
+    NearestMiMapLinear,
+    LinearMiMapNearest,
+    LinearMiMapLinear,
+}
+
 #[derive(Default, Debug, Clone)]
 pub struct Texture2D {
     id: u32,
@@ -20,6 +29,7 @@ impl Texture2D {
         &mut self,
         file_name: &str,
         gl: &gl33::GlFns,
+        filter: Texture2DFilter,
     ) -> Result<(), OglError> {
         let mut f = OpenOptions::new()
             .read(true)
@@ -36,13 +46,14 @@ impl Texture2D {
                 .attach_printable(format!("Fails to read {file_name}: {e}"))
         })?;
 
-        self.create_from_buffer(&buf, gl)
+        self.create_from_buffer(&buf, gl, filter)
     }
 
     pub unsafe fn create_from_buffer(
         &mut self,
         buffer: &[u8],
         gl: &gl33::GlFns,
+        filter: Texture2DFilter,
     ) -> Result<(), OglError> {
         // stb_image loads the image with the origin at top left. while the origin is at bottom
         // left in Texture. We need to flip the image here.
@@ -91,10 +102,32 @@ impl Texture2D {
             gl33::GL_UNSIGNED_BYTE,
             data.as_ptr() as *const std::ffi::c_void,
         );
+
+        let use_filter = match filter {
+            Texture2DFilter::Linear => gl33::GL_LINEAR,
+            Texture2DFilter::Nearest => gl33::GL_NEAREST,
+            Texture2DFilter::NearestMiMapNearest => {
+                gl.GenerateMipmap(gl33::GL_TEXTURE_2D);
+                gl33::GL_NEAREST_MIPMAP_NEAREST
+            }
+            Texture2DFilter::NearestMiMapLinear => {
+                gl.GenerateMipmap(gl33::GL_TEXTURE_2D);
+                gl33::GL_NEAREST_MIPMAP_LINEAR
+            }
+            Texture2DFilter::LinearMiMapNearest => {
+                gl.GenerateMipmap(gl33::GL_TEXTURE_2D);
+                gl33::GL_LINEAR_MIPMAP_NEAREST
+            }
+            Texture2DFilter::LinearMiMapLinear => {
+                gl.GenerateMipmap(gl33::GL_TEXTURE_2D);
+                gl33::GL_LINEAR_MIPMAP_LINEAR
+            }
+        };
+
         gl.TexParameteri(
             gl33::GL_TEXTURE_2D,
             gl33::GL_TEXTURE_MIN_FILTER,
-            gl33::GL_LINEAR.0 as i32,
+            use_filter.0 as i32,
         );
         gl.TexParameteri(
             gl33::GL_TEXTURE_2D,

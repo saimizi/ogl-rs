@@ -19,6 +19,8 @@
     "libm",
     "libogl",
     "mediump",
+    "mipmap",
+    "mipmapping",
     "rustix",
     "stbi",
     "tempfile",

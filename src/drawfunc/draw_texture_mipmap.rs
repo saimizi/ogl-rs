@@ -6,8 +6,8 @@ use libogl::matrix::{OglMatrix, RotateDirection};
 use libogl::texture2d::Texture2DFilter;
 use libogl::VertexOps;
 
-pub fn draw_texture3(df: &mut DrawContext) -> Result<(), OglError> {
-    if !df.initialized || df.draw_func != DrawFunc::DrawTexture3 {
+pub fn draw_texture_mipmapping(df: &mut DrawContext) -> Result<(), OglError> {
+    if !df.initialized || df.draw_func != DrawFunc::DrawTextureMipMapping {
         let v_src = r#"
                 #version 300 es
                 layout(location = 0) in vec4 vPosition;
@@ -41,14 +41,14 @@ pub fn draw_texture3(df: &mut DrawContext) -> Result<(), OglError> {
         df.gl.build(Some(v_src), Some(f_src))?;
 
         df.initialized = true;
-        df.draw_func = DrawFunc::DrawTexture3;
+        df.draw_func = DrawFunc::DrawTextureMipMapping;
 
         unsafe {
             let gl = df.gl.gl();
             let program = df.gl.program().unwrap();
 
             let data = include_bytes!("../../doc/sample2.png");
-            df.texture[0].create_from_buffer(data, gl, Texture2DFilter::Linear)?;
+            df.texture[0].create_from_buffer(data, gl, Texture2DFilter::NearestMiMapNearest)?;
             jdebug!("texture: {}", df.texture[0]);
 
             gl.UseProgram(program);
@@ -58,22 +58,40 @@ pub fn draw_texture3(df: &mut DrawContext) -> Result<(), OglError> {
                 .ok_or(Report::new(OglError::Unexpected))?;
 
             // Create VBO for vertex and color
-            gl.GenBuffers(3, &mut df.vbo as *mut u32);
+            gl.GenBuffers(2, &mut df.vbo as *mut u32);
 
-            // We can draw a cube with only 8 vertices. BUT it will lead to the problem of setting
-            // up color/texture for each surfaces.
             #[rustfmt::skip]
             let vertices = [
-                //x        y      z             
-                -0.5f32, -0.5f32, -0.5f32,  //v0
-                -0.5f32, -0.5f32,  0.5f32,  //v1
-                 0.5f32, -0.5f32,  0.5f32,  //v2
-                 0.5f32, -0.5f32, -0.5f32,  //v3
+                //x        y      z             s       t
+                -0.5f32, -0.5f32, -0.5f32,      1.0f32, 0.0f32,     //v0
+                -0.5f32, -0.5f32,  0.5f32,      0.0f32, 0.0f32,     //v1
+                 0.5f32, -0.5f32,  0.5f32,      0.0f32, 1.0f32,     //v2
+                 0.5f32, -0.5f32, -0.5f32,      1.0f32, 1.0f32,     //v3
 
-                -0.5f32,  0.5f32, -0.5f32,  //v4
-                -0.5f32,  0.5f32,  0.5f32,  //v5
-                 0.5f32,  0.5f32,  0.5f32,  //v6
-                 0.5f32,  0.5f32, -0.5f32,  //v7
+                -0.5f32,  0.5f32, -0.5f32,      0.0f32, 0.0f32,     //v4
+                -0.5f32,  0.5f32,  0.5f32,      1.0f32, 0.0f32,     //v5
+                 0.5f32,  0.5f32,  0.5f32,      1.0f32, 1.0f32,     //v6
+                 0.5f32,  0.5f32, -0.5f32,      0.0f32, 1.0f32,     //v7
+
+                -0.5f32, -0.5f32, -0.5f32,      1.0f32, 0.0f32,     //v8  = v0
+                -0.5f32,  0.5f32, -0.5f32,      1.0f32, 1.0f32,     //v9  = v4
+                 0.5f32,  0.5f32, -0.5f32,      0.0f32, 1.0f32,     //v10 = v7
+                 0.5f32, -0.5f32, -0.5f32,      0.0f32, 0.0f32,     //v11 = v3
+
+                -0.5f32, -0.5f32,  0.5f32,      0.0f32, 0.0f32,     //v12 = v1
+                -0.5f32,  0.5f32,  0.5f32,      0.0f32, 1.0f32,     //v13 = v5
+                 0.5f32,  0.5f32,  0.5f32,      1.0f32, 1.0f32,     //v14 = v6
+                 0.5f32, -0.5f32,  0.5f32,      1.0f32, 0.0f32,     //v15 = v2
+
+                -0.5f32, -0.5f32, -0.5f32,      0.0f32, 0.0f32,     //v16 = v0
+                -0.5f32, -0.5f32,  0.5f32,      1.0f32, 0.0f32,     //v17 = v1
+                -0.5f32,  0.5f32,  0.5f32,      1.0f32, 1.0f32,     //v18 = v5
+                -0.5f32,  0.5f32, -0.5f32,      0.0f32, 1.0f32,     //v19 = v4
+
+                 0.5f32, -0.5f32, -0.5f32,      1.0f32, 0.0f32,     //v20 = v3
+                 0.5f32, -0.5f32,  0.5f32,      0.0f32, 0.0f32,     //v21 = v2
+                 0.5f32,  0.5f32,  0.5f32,      0.0f32, 1.0f32,     //v22 = v6
+                 0.5f32,  0.5f32, -0.5f32,      1.0f32, 1.0f32,     //v23 = v7
             ];
 
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, df.vbo[0]);
@@ -87,58 +105,8 @@ pub fn draw_texture3(df: &mut DrawContext) -> Result<(), OglError> {
             );
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, 0);
 
-            gl.BindBuffer(gl33::GL_ARRAY_BUFFER, df.vbo[1]);
+            gl.BindBuffer(gl33::GL_ELEMENT_ARRAY_BUFFER, df.vbo[1]);
 
-            //   Since we reuse the vertex data, the texture coordinates of vertex are decided by
-            //   first 8 vertices.
-            //
-            //   That means we can only set 2 of 6 cube surfaces, 4 surfaces will be decided
-            //   automatically.
-            #[rustfmt::skip]
-            let texture_coordinates = [
-             // s       t
-                1.0f32, 0.0f32,     //v0
-                0.0f32, 0.0f32,     //v1
-                0.0f32, 1.0f32,     //v2
-                1.0f32, 1.0f32,     //v3
-
-                0.0f32, 0.0f32,     //v4
-                1.0f32, 0.0f32,     //v5
-                1.0f32, 1.0f32,     //v6
-                0.0f32, 1.0f32,     //v7
-
-             // following settings are ignored...
-                0.0f32, 0.0f32,     //v8  = v0
-                0.0f32, 0.0f32,     //v9  = v4
-                0.0f32, 0.0f32,     //v10 = v7
-                0.0f32, 0.0f32,     //v11 = v3
-
-                1.0f32, 0.0f32,     //v12 = v1
-                0.0f32, 0.0f32,     //v13 = v5
-                0.0f32, 1.0f32,     //v14 = v6
-                1.0f32, 1.0f32,     //v15 = v2
-
-                1.0f32, 0.0f32,     //v16 = v0
-                1.0f32, 1.0f32,     //v17 = v1
-                0.0f32, 1.0f32,     //v18 = v5
-                0.0f32, 0.0f32,     //v19 = v4
-
-                0.0f32, 0.0f32,     //v20 = v3
-                0.0f32, 1.0f32,     //v21 = v2
-                1.0f32, 1.0f32,     //v22 = v6
-                1.0f32, 0.0f32,     //v23 = v7
-            ];
-
-            let texture_coordinates_u8 = texture_coordinates.to_u8_slice();
-            gl.BufferData(
-                gl33::GL_ARRAY_BUFFER,
-                texture_coordinates_u8.len() as isize,
-                texture_coordinates_u8.as_ptr().cast(),
-                gl33::GL_STATIC_DRAW,
-            );
-            gl.BindBuffer(gl33::GL_ARRAY_BUFFER, 0);
-
-            gl.BindBuffer(gl33::GL_ELEMENT_ARRAY_BUFFER, df.vbo[2]);
             #[rustfmt::skip]
             let indices = [
                 0_u16,   2_u16,  1_u16,
@@ -147,17 +115,17 @@ pub fn draw_texture3(df: &mut DrawContext) -> Result<(), OglError> {
                 4_u16,   5_u16,  6_u16,
                 4_u16,   6_u16,  7_u16,
 
-                0_u16,   4_u16,  7_u16,
-                0_u16,   7_u16,  3_u16,
+                8_u16,   9_u16,  10_u16,
+                8_u16,  10_u16,  11_u16,
 
-                1_u16,   6_u16,  5_u16,
-                1_u16,   2_u16,  6_u16,
+               12_u16,  14_u16, 13_u16,
+               12_u16,  15_u16, 14_u16,
 
-                0_u16,   1_u16,  5_u16,
-                0_u16,   5_u16,  4_u16,
+               16_u16,  17_u16, 18_u16,
+               16_u16,  18_u16, 19_u16,
 
-                3_u16,   7_u16,  6_u16,
-                3_u16,   6_u16,  2_u16
+               20_u16,  23_u16, 22_u16,
+               20_u16,  22_u16, 21_u16
             ];
 
             let indices_u8 = indices.to_u8_slice();
@@ -176,21 +144,37 @@ pub fn draw_texture3(df: &mut DrawContext) -> Result<(), OglError> {
             gl.GenVertexArrays(1, &mut vao as *mut u32);
 
             gl.BindVertexArray(vao);
+            let stride = std::mem::size_of::<f32>() * 5;
+            let mut offset = 0;
 
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, df.vbo[0]);
             gl.EnableVertexAttribArray(0);
-            gl.VertexAttribPointer(0, 3, gl33::GL_FLOAT, 0, 0, 0 as *const std::ffi::c_void);
+            gl.VertexAttribPointer(
+                0,
+                3,
+                gl33::GL_FLOAT,
+                0,
+                stride as i32,
+                offset as *const std::ffi::c_void,
+            );
+
+            offset = std::mem::size_of::<f32>() * 3;
 
             gl.EnableVertexAttribArray(1);
-            gl.BindBuffer(gl33::GL_ARRAY_BUFFER, df.vbo[1]);
-            gl.VertexAttribPointer(1, 2, gl33::GL_FLOAT, 0, 0, 0 as *const std::ffi::c_void);
-            gl.BindBuffer(gl33::GL_ARRAY_BUFFER, 0);
+            gl.VertexAttribPointer(
+                1,
+                2,
+                gl33::GL_FLOAT,
+                0,
+                stride as i32,
+                offset as *const std::ffi::c_void,
+            );
 
             // Bind texture
             let location = df.location("u_Texture").unwrap();
             df.texture[0].bind(gl, 0, location)?;
 
-            gl.BindBuffer(gl33::GL_ELEMENT_ARRAY_BUFFER, df.vbo[2]);
+            gl.BindBuffer(gl33::GL_ELEMENT_ARRAY_BUFFER, df.vbo[1]);
 
             gl.BindVertexArray(0);
             gl.BindBuffer(gl33::GL_ARRAY_BUFFER, 0);
@@ -218,7 +202,7 @@ pub fn draw_texture3(df: &mut DrawContext) -> Result<(), OglError> {
 
         // Rotate the cube
         let angle = (elapsed_milliseconds() / 16 % u32::MAX as u128) as f32;
-        //        let angle = 135.0f32;
+        //let angle = 135.0f32;
         jdebug!(angle = angle);
         mvp.rotate(angle, RotateDirection::AxisX)?;
         mvp.rotate(angle, RotateDirection::AxisY)?;
