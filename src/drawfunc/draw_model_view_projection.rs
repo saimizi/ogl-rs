@@ -3,8 +3,6 @@ use super::{DrawContext, DrawFunc};
 use error_stack::{Report, Result};
 use jlogger_tracing::jdebug;
 use libogl::error::OglError;
-use libogl::matrix::OglMatrix;
-use libogl::matrix::RotateDirection;
 use libogl::VertexOps;
 
 pub fn draw_model_view_projection(df: &mut DrawContext) -> Result<(), OglError> {
@@ -200,32 +198,41 @@ pub fn draw_model_view_projection(df: &mut DrawContext) -> Result<(), OglError> 
 
         // Enable VAO
         gl.BindVertexArray(df.vao.unwrap());
-        let aspect = df.width as f32 / df.height as f32;
 
-        let mut mvp = OglMatrix::new(None);
+        // Scale matrix
+        let scale = glam::Mat4::from_scale(glam::vec3(1.5f32, 1.5f32, 1.5f32));
 
-        // Scale the cube
-        mvp.scale(1.5f32, 1.5f32, 1.5f32)?;
-        jdebug!("{}", format!("scaled mvp:\n{}", mvp));
-
-        // Rotate the cube
+        // Rotate matrix
         let angle = (elapsed_milliseconds() / 16 % u32::MAX as u128) as f32;
-        jdebug!(angle = angle);
-        mvp.rotate(angle, RotateDirection::AxisX)?;
-        mvp.rotate(angle, RotateDirection::AxisY)?;
-        mvp.rotate(angle, RotateDirection::AxisZ)?;
-        mvp.rotate(angle, RotateDirection::AxisXYZ(1.0f32, 0.0f32, 1.0f32))?;
-        jdebug!("{}", format!("rotated mvp:\n{}", mvp));
+        let rotate_x = glam::Mat4::from_quat(glam::Quat::from_rotation_x(angle.to_radians()));
 
-        // Move the cube
-        mvp.translate(0.0f32, 0.0f32, 5.0f32)?;
-        jdebug!("{}", format!("translated mvp:\n{}", mvp));
+        let rotate_y = glam::Mat4::from_quat(glam::Quat::from_rotation_y(angle.to_radians()));
 
-        // Set perspective
-        mvp.perspective(60.0f32, aspect, 1.0f32, 20.0f32)?;
-        jdebug!("{}", format!("perspective mvp:\n{}", mvp));
+        let rotate_z = glam::Mat4::from_quat(glam::Quat::from_rotation_z(angle.to_radians()));
 
-        gl.UniformMatrix4fv(df.locations[0], 1, 1, mvp.as_ptr());
+        // Translate matrix
+        let translate = glam::Mat4::from_translation(glam::Vec3::new(0.0f32, 0.0f32, 5.0f32));
+        jdebug!(translate = format!("{:?}", translate));
+
+        // Perspective matrix
+        let aspect = df.width as f32 / df.height as f32;
+        let near = 1.0f32;
+        let far = 20.0f32;
+        let fov = 45.0f32.to_radians();
+        jdebug!(near = near, far = far, fov = fov);
+        let perspective = glam::Mat4::perspective_lh(fov, aspect, near, far);
+
+        // Cube is operated from right to left
+        //  1. rotate z
+        //  2. rotate y
+        //  3. rotate x
+        //  4. translate
+        //  5. scale
+        //  6. perspective
+        let mvp = perspective * scale * translate * rotate_x * rotate_y * rotate_z;
+
+        jdebug!(mvp = format!("{:?}", mvp));
+        gl.UniformMatrix4fv(df.locations[0], 1, 0, mvp.as_ref().as_ptr().cast());
 
         gl.Enable(gl33::GL_CULL_FACE);
         gl.FrontFace(gl33::GL_CCW);

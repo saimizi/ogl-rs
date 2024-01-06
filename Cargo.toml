@@ -20,6 +20,7 @@ name = "ogl"
 clap = { version = "4.4.7", features = ["derive", "cargo", "help"] }
 error-stack = "0.4.1"
 gl33 = { version = "0.2.1", optional = true }
+glam = "0.25.0"
 glow = { version = "0.13.0", optional = true }
 jlogger-tracing = "0.1.4"
 #khronos-egl = { version = "6.0.0", features = ["static"] }

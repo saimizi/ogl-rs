@@ -1,5 +1,4 @@
 pub mod error;
-pub mod matrix;
 pub mod texture2d;
 
 pub trait VertexOps {
