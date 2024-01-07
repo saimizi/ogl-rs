@@ -1,7 +1,7 @@
 use super::error::OglError;
 use error_stack::{Report, Result};
 use stb_image::stb_image::*;
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::slice;
@@ -223,6 +223,7 @@ impl Display for Texture2D {
 #[derive(Default, Debug, Clone)]
 pub struct CubeFace {
     pub data: Vec<u8>,
+    pub image: String,
     pub width: i32,
     pub height: i32,
     pub bpp: i32,
@@ -237,7 +238,7 @@ pub struct Texture2DCubeMap {
 impl Texture2DCubeMap {
     pub unsafe fn create_from_file(
         &mut self,
-        files: &[&str],
+        files: Vec<&str>,
         gl: &gl33::GlFns,
         filter: Texture2DFilter,
     ) -> Result<(), OglError> {
@@ -247,22 +248,13 @@ impl Texture2DCubeMap {
 
         let mut buffers = vec![];
         for i in 0..6 {
-            let mut f = OpenOptions::new()
-                .read(true)
-                .create(false)
-                .open(files[i])
-                .map_err(|e| {
-                    Report::new(OglError::InvalidData)
-                        .attach_printable(format!("Failed to open {}:{e}", files[i]))
-                })?;
-
-            let mut buf: Vec<u8> = Vec::new();
-            f.read_to_end(&mut buf).map_err(|e| {
+            let buf = std::fs::read(files[i]).map_err(|e| {
                 Report::new(OglError::InvalidData)
-                    .attach_printable(format!("Fails to read {}: {e}", files[i]))
+                    .attach_printable(format!("Failed to read {}: {e}", files[i]))
             })?;
 
             buffers.push(buf);
+            self.faces[i].image = files[i].to_owned();
         }
 
         self.create_from_buffer(buffers.iter().map(|a| a.as_slice()).collect(), gl, filter)
@@ -452,10 +444,20 @@ impl Display for Texture2DCubeMap {
         msg.push_str(&format!("id: {}\n", self.id));
 
         (0..6_usize).into_iter().for_each(|i| {
-            msg.push_str(&format!(
-                "width:{}, height:{}, bpp: {}\n",
-                self.faces[i].width, self.faces[i].height, self.faces[i].bpp
-            ));
+            if !self.faces[i].image.is_empty() {
+                msg.push_str(&format!(
+                    "image:{}, width:{}, height:{}, bpp:{}\n",
+                    self.faces[i].image,
+                    self.faces[i].width,
+                    self.faces[i].height,
+                    self.faces[i].bpp
+                ));
+            } else {
+                msg.push_str(&format!(
+                    "width:{}, height:{}, bpp: {}\n",
+                    self.faces[i].width, self.faces[i].height, self.faces[i].bpp
+                ));
+            }
         });
 
         write!(f, "{msg}")

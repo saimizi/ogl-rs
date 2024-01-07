@@ -48,13 +48,29 @@ pub fn draw_texture_cubemap(df: &mut DrawContext) -> Result<(), OglError> {
             let program = df.gl.program().unwrap();
             gl.UseProgram(program);
 
-            let data = include_bytes!("../../doc/sample3.png");
-            let mut buf = vec![];
-            (0..6).into_iter().for_each(|_| {
-                buf.push(data.as_slice());
-            });
+            let images = vec![
+                "right.jpg",
+                "left.jpg",
+                "top.jpg",
+                "bottom.jpg",
+                "back.jpg",
+                "front.jpg",
+            ]
+            .into_iter()
+            .map(|a| {
+                format!(
+                    "{}/{a}",
+                    std::env::var("OGL_IMAGES").unwrap_or(".".to_owned())
+                )
+            })
+            .collect::<Vec<String>>();
 
-            df.texture_cubemap[0].create_from_buffer(buf, gl, Texture2DFilter::Linear)?;
+            df.texture_cubemap[0].create_from_file(
+                images.iter().map(|a| a.as_str()).collect::<Vec<&str>>(),
+                gl,
+                Texture2DFilter::Linear,
+            )?;
+
             jdebug!("texture_cubemap: {}", df.texture_cubemap[0]);
 
             df.locations[0] = df
@@ -127,10 +143,10 @@ pub fn draw_texture_cubemap(df: &mut DrawContext) -> Result<(), OglError> {
                     .collect();
             }
 
-            jdebug!(
-                vertices_norm_f32 = format!("vertices_norm_f32: {:?}", vertices_norm_f32),
-                len = vertices_norm_f32.len()
-            );
+            //            jdebug!(
+            //                vertices_norm_f32 = format!("vertices_norm_f32: {:?}", vertices_norm_f32),
+            //                len = vertices_norm_f32.len()
+            //            );
 
             gl.BufferData(
                 gl33::GL_ARRAY_BUFFER,
