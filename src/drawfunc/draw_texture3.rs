@@ -46,7 +46,7 @@ pub fn draw_texture3(df: &mut DrawContext) -> Result<(), OglError> {
             let gl = df.gl.gl();
             let program = df.gl.program().unwrap();
 
-            let data = include_bytes!("../../doc/sample2.png");
+            let data = include_bytes!("../../doc/hamster.png");
             df.texture[0].create_from_buffer(data, gl, Texture2DFilter::Linear)?;
             jdebug!("texture: {}", df.texture[0]);
 
