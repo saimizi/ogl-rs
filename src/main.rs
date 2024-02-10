@@ -41,7 +41,7 @@ struct Cli {
     window: String,
 
     #[command(flatten)]
-    backend: Backend,
+    exclusive: ExclusiveOption,
 
     #[arg(short, long, default_value_t = 0usize)]
     func: usize,
@@ -52,12 +52,15 @@ struct Cli {
 
 #[derive(Args)]
 #[group(required = true, multiple = false)]
-struct Backend {
+struct ExclusiveOption {
     #[arg(short = 'W', long)]
     wayland: bool,
 
     #[arg(short = 'S', long)]
     sdl: bool,
+
+    #[arg(short, long)]
+    list_func: bool,
 }
 
 struct WaylandOps {
@@ -109,7 +112,20 @@ fn main() -> Result<(), OglError> {
     let width = w[0];
     let height = w[1];
 
-    if cli.backend.wayland {
+    if cli.exclusive.list_func {
+        eprintln!("All functions:");
+        for func in (1_usize..100_usize).into_iter().map(|a| DrawFunc::from(a)) {
+            if func == DrawFunc::InvalidDrawFunc {
+                break;
+            }
+
+            eprintln!("{}", func);
+        }
+
+        std::process::exit(0);
+    }
+
+    if cli.exclusive.wayland {
         let ws_cb = WaylandEventCb {
             key_pressed: Some(Box::new(|key: u32| {
                 if key == 1 {
@@ -128,7 +144,7 @@ fn main() -> Result<(), OglError> {
         let mut w = WaylandOps { ws, egl };
 
         dt.run(&mut w, cli.func.into())?;
-    } else if cli.backend.sdl {
+    } else if cli.exclusive.sdl {
         let mut sdl = Sdl2State::new(width, height)?;
         let gl = GlState::new(&sdl, None, None)?;
         let mut dt = DrawContext::new(gl, width, height);

@@ -23,7 +23,7 @@ pub mod draw_without_vbo;
 
 use super::gl::GlState;
 use error_stack::Result;
-use jlogger_tracing::jinfo;
+use jlogger_tracing::{jerror, jinfo};
 use libogl::error::OglError;
 use libogl::texture2d::{Texture2D, Texture2DCubeMap};
 use once_cell::sync::OnceCell;
@@ -116,6 +116,7 @@ pub enum DrawFunc {
     DrawTexture3,
     DrawTextureMipMapping,
     DrawTextureCubeMap,
+    InvalidDrawFunc,
 }
 
 impl std::fmt::Display for DrawFunc {
@@ -123,38 +124,39 @@ impl std::fmt::Display for DrawFunc {
         let index: usize = self.into();
 
         let msg = match self {
-            DrawFunc::DrawVbo => format!("{:3}_DrawVbo", index),
-            DrawFunc::DrawVbo2 => format!("{:3}_DrawVbo2", index),
-            DrawFunc::DrawVboVertexColor => format!("{}_DrawVboVertexColor", index),
+            DrawFunc::DrawVbo => format!("{:3} DrawVbo", index),
+            DrawFunc::DrawVbo2 => format!("{:3} DrawVbo2", index),
+            DrawFunc::DrawVboVertexColor => format!("{:3} DrawVboVertexColor", index),
             DrawFunc::DrawVboVertexColor2 => {
-                format!("{}_DrawVboVertexColor2", index)
+                format!("{:3} DrawVboVertexColor2", index)
             }
-            DrawFunc::DrawVaoVertexColor => format!("{}_DrawVaoVertexColor", index),
+            DrawFunc::DrawVaoVertexColor => format!("{:3} DrawVaoVertexColor", index),
             DrawFunc::DrawVaoVertexColor2 => {
-                format!("{}_DrawVaoVertexColor2", index)
+                format!("{:3} DrawVaoVertexColor2", index)
             }
             DrawFunc::DrawVaoVertexColorElement2 => {
-                format!("{}, DrawVaoVertexColorElement2", index)
+                format!("{:3} DrawVaoVertexColorElement2", index)
             }
-            DrawFunc::DrawCircle => format!("{}_DrawCircle", index),
-            DrawFunc::DrawComplex => format!("{}_DrawComplex", index),
-            DrawFunc::DrawWithoutVbo => format!("{}_DrawWithoutVbo", index),
-            DrawFunc::DrawLines => format!("{}_DrawLines", index),
+            DrawFunc::DrawCircle => format!("{:3} DrawCircle", index),
+            DrawFunc::DrawComplex => format!("{:3} DrawComplex", index),
+            DrawFunc::DrawWithoutVbo => format!("{:3} DrawWithoutVbo", index),
+            DrawFunc::DrawLines => format!("{:3} DrawLines", index),
             DrawFunc::DrawPrimitiveRestart => {
-                format!("{}_DrawPrimitiveRestart", index)
+                format!("{:3} DrawPrimitiveRestart", index)
             }
             DrawFunc::DrawProvokingVertex => {
-                format!("{}_DrawProvokingVertex", index)
+                format!("{:3} DrawProvokingVertex", index)
             }
-            DrawFunc::DrawInstance => format!("{}_DrawInstance", index),
-            DrawFunc::DrawInstance2 => format!("{}_DrawInstance2", index),
-            DrawFunc::DrawTriangleStrip => format!("{}_DrawTriangleStrip", index),
-            DrawFunc::DrawModelViewProjection => format!("{}_DrawModelViewProjection", index),
-            DrawFunc::DrawTexture => format!("{}_DrawTexture", index),
-            DrawFunc::DrawTexture2 => format!("{}_DrawTexture2", index),
-            DrawFunc::DrawTexture3 => format!("{}_DrawTexture3", index),
-            DrawFunc::DrawTextureMipMapping => format!("{}_DrawTextureMipMapping", index),
-            DrawFunc::DrawTextureCubeMap => format!("{}_DrawTextureCubeMap", index),
+            DrawFunc::DrawInstance => format!("{:3} DrawInstance", index),
+            DrawFunc::DrawInstance2 => format!("{:3} DrawInstance2", index),
+            DrawFunc::DrawTriangleStrip => format!("{:3} DrawTriangleStrip", index),
+            DrawFunc::DrawModelViewProjection => format!("{:3} DrawModelViewProjection", index),
+            DrawFunc::DrawTexture => format!("{:3} DrawTexture", index),
+            DrawFunc::DrawTexture2 => format!("{:3} DrawTexture2", index),
+            DrawFunc::DrawTexture3 => format!("{:3} DrawTexture3", index),
+            DrawFunc::DrawTextureMipMapping => format!("{:3} DrawTextureMipMapping", index),
+            DrawFunc::DrawTextureCubeMap => format!("{:3} DrawTextureCubeMap", index),
+            DrawFunc::InvalidDrawFunc => format!("InvalidDrawFunc"),
         };
 
         write!(f, "{}", msg)
@@ -186,7 +188,7 @@ impl From<usize> for DrawFunc {
             20 => DrawFunc::DrawTexture3,
             21 => DrawFunc::DrawTextureMipMapping,
             22 => DrawFunc::DrawTextureCubeMap,
-            _ => DrawFunc::DrawModelViewProjection,
+            _ => DrawFunc::InvalidDrawFunc,
         }
     }
 }
@@ -290,6 +292,8 @@ impl DrawContext {
                 DrawFunc::DrawTexture3 => draw_texture3(self)?,
                 DrawFunc::DrawTextureMipMapping => draw_texture_mipmapping(self)?,
                 DrawFunc::DrawTextureCubeMap => draw_texture_cubemap(self)?,
+                // Default draw mipmap function
+                DrawFunc::InvalidDrawFunc => draw_texture_mipmapping(self)?,
             }
 
             ops.do_swap()?;
