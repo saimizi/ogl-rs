@@ -133,9 +133,17 @@ fn main() -> Result<(), OglError> {
         std::process::exit(0);
     }
 
-    if let DrawFunc::InvalidDrawFunc = DrawFunc::from(cli.func) {
-        jerror!("Invalid draw function\n");
-        std::process::exit(1);
+    match DrawFunc::from(cli.func) {
+        DrawFunc::InvalidDrawFunc => {
+            jerror!("Invalid draw function\n");
+            std::process::exit(1);
+        }
+
+        DrawFunc::DrawTextureCubeMap => {
+            jerror!("Not implemented\n");
+            std::process::exit(1);
+        }
+        _ => {}
     }
 
     if cli.exclusive.wayland {
