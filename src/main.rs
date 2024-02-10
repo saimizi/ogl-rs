@@ -43,8 +43,11 @@ struct Cli {
     #[command(flatten)]
     exclusive: ExclusiveOption,
 
-    #[arg(short, long, default_value_t = 0usize)]
+    #[arg(short, long, default_value_t = 21usize)]
     func: usize,
+
+    #[arg(short, long)]
+    time_stamp: bool,
 
     #[arg(short, long, action=clap::ArgAction::Count)]
     verbose: u8,
@@ -96,9 +99,14 @@ fn main() -> Result<(), OglError> {
         _ => LevelFilter::INFO,
     };
 
+    let mut time_format = LogTimeFormat::TimeNone;
+    if cli.time_stamp {
+        time_format = LogTimeFormat::TimeStamp;
+    }
+
     JloggerBuilder::new()
         .max_level(level)
-        .log_time(LogTimeFormat::TimeStamp)
+        .log_time(time_format)
         .build();
 
     let w: Vec<i32> = cli
@@ -113,16 +121,21 @@ fn main() -> Result<(), OglError> {
     let height = w[1];
 
     if cli.exclusive.list_func {
-        eprintln!("All functions:");
+        jinfo!("All functions:");
         for func in (1_usize..100_usize).into_iter().map(|a| DrawFunc::from(a)) {
             if func == DrawFunc::InvalidDrawFunc {
                 break;
             }
 
-            eprintln!("{}", func);
+            jinfo!("{}", func);
         }
 
         std::process::exit(0);
+    }
+
+    if let DrawFunc::InvalidDrawFunc = DrawFunc::from(cli.func) {
+        jerror!("Invalid draw function\n");
+        std::process::exit(1);
     }
 
     if cli.exclusive.wayland {

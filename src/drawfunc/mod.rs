@@ -292,8 +292,10 @@ impl DrawContext {
                 DrawFunc::DrawTexture3 => draw_texture3(self)?,
                 DrawFunc::DrawTextureMipMapping => draw_texture_mipmapping(self)?,
                 DrawFunc::DrawTextureCubeMap => draw_texture_cubemap(self)?,
-                // Default draw mipmap function
-                DrawFunc::InvalidDrawFunc => draw_texture_mipmapping(self)?,
+                DrawFunc::InvalidDrawFunc => {
+                    jerror!("Invalid function.");
+                    break;
+                }
             }
 
             ops.do_swap()?;
